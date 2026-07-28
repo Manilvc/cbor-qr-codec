@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cbor-qr-codec playground</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      line-height: 1.4;
+    }
+    h1 {
+      font-size: 1.25rem;
+    }
+    .row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    textarea {
+      width: 100%;
+      min-height: 8rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.9rem;
+    }
+    button {
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+    }
+    .output {
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: color-mix(in srgb, currentColor 6%, transparent);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+      min-height: 2.5rem;
+    }
+    .error {
+      color: #d33;
+    }
+    .meta {
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+    #qrcode {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>cbor-qr-codec playground</h1>
+  <p class="meta">
+    Paste a JSON-compatible value, encode it to a QR-safe Base45 string, then decode it back.
+    This demo is text-only — it does not render or scan QR images.
+  </p>
+
+  <h2>Input</h2>
+  <textarea id="input" spellcheck="false">{ "id": 42, "name": "Ada" }</textarea>
+
+  <div class="row">
+    <label>
+      Compression
+      <select id="compression">
+        <option value="auto" selected>auto</option>
+        <option value="always">always</option>
+        <option value="never">never</option>
+      </select>
+    </label>
+    <label>
+      <input type="checkbox" id="strict" checked />
+      Strict decode
+    </label>
+    <button id="encode">Encode &rarr;</button>
+  </div>
+
+  <h2>Encoded (QR)</h2>
+  <div class="row">
+    <canvas id="qrcode"></canvas>
+  </div>
+  <div class="row">
+    <span id="encodedMeta" class="meta"></span>
+    <button id="decode">&larr; Decode</button>
+  </div>
+
+  <h2>Decoded</h2>
+  <div id="decoded" class="output"></div>
+
+  <div id="error" class="error"></div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "name": "cbor-qr-codec",
+  "version": "0.1.0",
+  "description": "Bidirectional codec for encoding JSON documents to QR-safe CBOR and decoding them back — CBOR encoding, opportunistic compression, and Base45 (RFC 9285) text encoding with a self-describing flag byte, so payloads survive lossy UTF-8 decoding by mobile QR scanners (ML Kit, Vision).",
+  "keywords": [
+    "cbor",
+    "qr-code",
+    "base45",
+    "rfc9285",
+    "codec"
+  ],
+  "license": "MIT",
+  "author": "Manilvc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Manilvc/cbor-qr-codec.git" 
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "demo": "vite demo",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/qrcode": "^1.5.6",
+    "qrcode": "^1.5.4",
+    "tsup": "^8.2.0",
+    "typescript": "^5.5.0",
+    "vite": "^6.4.3",
+    "vitest": "^4.0.0"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3"
+  }
+}
