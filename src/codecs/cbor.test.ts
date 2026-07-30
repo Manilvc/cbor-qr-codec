@@ -54,6 +54,36 @@ describe('encodeCbor / decodeCbor - round trip', () => {
     expect(roundTrip(value)).toEqual(value);
   });
 
+  it('round-trips repeated long string values (deduped via a string-reference tag)', () => {
+    const repeated = 'a'.repeat(40);
+    const value = [repeated, { a: repeated, b: repeated }, [repeated, repeated]];
+    expect(roundTrip(value)).toEqual(value);
+  });
+
+  it('round-trips repeated long map keys', () => {
+    const longKey = 'x'.repeat(40);
+    const value = [{ [longKey]: 1 }, { [longKey]: 2 }, { [longKey]: 3 }];
+    expect(roundTrip(value)).toEqual(value);
+  });
+
+  it('actually shrinks output when a long string repeats often', () => {
+    const repeated = 'y'.repeat(100);
+    const value = Array(10).fill(repeated);
+    const deduped = encodeCbor(value);
+    // 10 literal copies would be >= 10 * 100 bytes; deduped, only the first is literal.
+    expect(deduped.length).toBeLessThan(300);
+  });
+
+  it('does not dedupe strings shorter than the minimum length, even if repeated', () => {
+    const short = 'short'; // below MIN_DEDUPE_LENGTH
+    const bytes = encodeCbor([short, short, short]);
+    // Tag 25's CBOR head is [0xd8, 0x19]; if dedup kicked in for a short string, this
+    // byte pair would appear in the output. It shouldn't for anything under the threshold.
+    const hasStringRefTag = bytes.some((b, i) => b === 0xd8 && bytes[i + 1] === 0x19);
+    expect(hasStringRefTag).toBe(false);
+    expect(roundTrip([short, short, short])).toEqual([short, short, short]);
+  });
+
   it('round-trips a JSON-LD-shaped document', () => {
     const doc = {
       '@context': ['https://www.w3.org/ns/credentials/v2', 'https://www.w3.org/ns/credentials/examples/v2'],
@@ -120,8 +150,18 @@ describe('decodeCbor - malformed/unsupported input', () => {
     expect(() => decodeCbor(Uint8Array.from([0x41, 0x00]))).toThrow(/byte strings/);
   });
 
-  it('throws on a CBOR tag (major type 6)', () => {
+  it('throws on a CBOR tag other than the internal string-reference tag', () => {
     expect(() => decodeCbor(Uint8Array.from([0xc0, 0x00]))).toThrow(/tags/);
+  });
+
+  it('throws on a string-reference tag wrapping a non-integer', () => {
+    // Tag 25 (0xd8, 0x19) wrapping a text string (0x60 = zero-length text string) instead of an unsigned int.
+    expect(() => decodeCbor(Uint8Array.from([0xd8, 0x19, 0x60]))).toThrow(/must wrap an unsigned integer/);
+  });
+
+  it('throws on a string-reference tag whose index is out of range', () => {
+    // Tag 25 (0xd8, 0x19) wrapping unsigned int 0 (0x00), with no strings decoded yet.
+    expect(() => decodeCbor(Uint8Array.from([0xd8, 0x19, 0x00]))).toThrow(/out of range/);
   });
 
   it('throws on an indefinite-length array', () => {

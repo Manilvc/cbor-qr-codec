@@ -20,3 +20,15 @@ export const SIMPLE = {
   FLOAT32: 26,
   FLOAT64: 27,
 } as const;
+
+/**
+ * Tag numbers this codec recognizes on a CBOR tag (major type 6) item. Every other tag
+ * number is rejected — this is not general tag support, just one internal, private-use
+ * construct for {@link STRING_REF} (loosely inspired by, but not equivalent to, the
+ * unfinished "CBOR tags for binary rounding and string references" draft; there is no
+ * claim of interop with other CBOR implementations).
+ */
+export const TAG = {
+  /** Tags an unsigned integer as an index into this document's string table. */
+  STRING_REF: 25,
+} as const;

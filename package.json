@@ -1,19 +1,37 @@
 {
   "name": "cbor-qr-codec",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Bidirectional codec for encoding JSON documents to QR-safe CBOR and decoding them back — CBOR encoding, opportunistic compression, and Base45 (RFC 9285) text encoding with a self-describing flag byte, so payloads survive lossy UTF-8 decoding by mobile QR scanners (ML Kit, Vision).",
   "keywords": [
     "cbor",
     "qr-code",
     "base45",
     "rfc9285",
-    "codec"
+    "codec",
+    "encoding",
+    "decoding",
+    "data-encoding",
+    "data-decoding",
+    "binary-data",
+    "binary-encoding",
+    "qr",
+    "qr-code-decoder",
+    "qr-code-encoder",
+    "base45-encoding",
+    "base45-decoding",
+    "cbor-encoding",
+    "cbor-decoding",
+    "rfc",
+    "digital-credentials",
+    "verifiable-credentials",
+    "credential-encoding",
+    "credential-decoding"
   ],
   "license": "MIT",
-  "author": "Manilvc",
+  "author": "Manil Jayswal",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Manilvc/cbor-qr-codec.git" 
+    "url": "git+https://github.com/jayswal433/cbor-qr-codec.git" 
   },
   "type": "module",
   "main": "./dist/index.cjs",
