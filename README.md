@@ -26,6 +26,68 @@ const value = decode<{ id: number; name: string }>(text);
 // -> { id: 42, name: 'Ada' }
 ```
 
+## Implementing it: generating and reading an actual QR code
+
+`encode()`/`decode()` only handle the text payload — pairing them with a QR
+library looks like this (using [`qrcode`](https://www.npmjs.com/package/qrcode),
+the same one the `demo/` playground uses):
+
+```ts
+import QRCode from 'qrcode';
+import { encode, decode } from 'cbor-qr-codec';
+
+// --- Generate ---
+const text = encode({ id: 42, name: 'Ada' });
+await QRCode.toCanvas(document.querySelector('canvas'), text, {
+  errorCorrectionLevel: 'M', // see "QR code capacity" below before changing this
+  margin: 1,
+  width: 320,
+});
+
+// --- Read back (after your scanner reads `text` off the rendered QR) ---
+const value = decode<{ id: number; name: string }>(text);
+```
+
+On Node, swap `QRCode.toCanvas` for `QRCode.toFile`/`QRCode.toDataURL`; on
+mobile, feed `text` into your platform's native QR encoder instead — the
+Base45 string is the only thing that has to cross that boundary.
+
+### QR code capacity
+
+A QR code has a hard ceiling on how much text it can hold, and no encoding
+option in this package can raise it — only the actual data size can. The
+maximum, in alphanumeric mode (what Base45 output uses) at version 40 (the
+largest QR size), per error-correction level:
+
+| Level | Max characters | Damage resilience |
+| ----- | --------------: | ------------------ |
+| L     | 4,296            | ~7%                 |
+| M (`qrcode`'s default) | 3,391 | ~15%          |
+| Q     | 2,420            | ~25%                |
+| H     | 1,852            | ~30%                |
+
+Check `text.length` against the level you're using *before* calling into
+your QR library, and fail with a clear message instead of letting an
+oversized payload throw the library's raw error:
+
+```ts
+const MAX_CHARS_BY_LEVEL = { L: 4296, M: 3391, Q: 2420, H: 1852 } as const;
+const level = 'M';
+
+if (text.length > MAX_CHARS_BY_LEVEL[level]) {
+  throw new Error(
+    `Payload too large for a single QR code (${text.length} chars, max ${MAX_CHARS_BY_LEVEL[level]} at level ${level}).`,
+  );
+}
+```
+
+If your payload doesn't fit, the options are: reduce the source data (drop
+fields recoverable from other fields already in the payload — e.g. this
+package's `encode()` already dedupes repeated string values/keys for you),
+lower the error-correction level for more headroom, or split the encoded
+text across multiple QR codes and reassemble it before calling `decode()`.
+See `demo/main.ts` for a worked single-QR-with-size-check example.
+
 ## API
 
 ### `encode(value: unknown, options?: EncodeOptions): string`
@@ -61,6 +123,35 @@ npm test           # run the Vitest suite
 npm run build      # emit dist/ (ESM + CJS + .d.ts) via tsup
 npm run dev        # tsup in watch mode
 ```
+
+## Publishing (maintainers)
+
+1. Bump `"version"` in `package.json` (semver: patch for fixes, minor for
+   backward-compatible additions, major for breaking changes to the public
+   `encode`/`decode` API or the wire format).
+2. Commit the version bump along with the change it ships, and push it:
+   ```sh
+   git add <changed files>
+   git commit -m "..."
+   git push origin <branch>
+   ```
+3. Log in to npm if you haven't already on this machine (interactive; can't
+   be scripted):
+   ```sh
+   npm login
+   npm whoami   # confirm you're authenticated as the right account
+   ```
+4. Publish. `prepublishOnly` already runs `typecheck` + `test` + `build`
+   automatically, so a broken or unbuilt package can't ship:
+   ```sh
+   npm publish
+   ```
+5. Tag the release in git so the npm version and the commit it came from
+   stay traceable:
+   ```sh
+   git tag v<version>
+   git push origin v<version>
+   ```
 
 ## Runtime support
 
